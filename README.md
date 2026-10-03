@@ -12,6 +12,8 @@ available **now**, what was found in the last week (even if it has since gone), 
 
 - Rows are coloured by seats: **green = 2 or more seats**, **amber = 1 seat**.
 - A **NEW** tag marks anything first seen in the last 24 hours.
+- A collapsible **Watching** section lists the routes and dates being searched, and whether that
+  list was set from Home Assistant or comes from the watcher's own config.
 - Colours come from your Home Assistant theme, so light and dark themes both work.
 - One file, no build step, no dependencies.
 
@@ -41,6 +43,7 @@ entity: sensor.lifemiles_watch
 | `recent_days` | `7` | how long a gone award still counts as "recent" |
 | `max_history` | `10` | older finds listed under "History" |
 | `max_runs` | `5` | runs listed under "Recent runs" |
+| `show_watches` | `true` | the "Watching" section; set `false` to hide it |
 
 ## The sensor
 
@@ -70,6 +73,8 @@ config               {pax, min_seats, max_miles_pp, interval_hours, watches: [..
 runs                 newest first: {at, ok, secs, attempts, errors, alerts, found, note?}
 current              {origin, dest, depart, flights, miles_pp, taxes_usd, seats, first_seen}
 history              the same plus gone_at, newest first
+config.watches       [{name, from: [codes], to: [codes], start, end}]; config.source is
+                     "home-assistant" or "config.toml" (shown as a note under Watching)
 ```
 
 Keep the attributes under Home Assistant's 16 KB limit (about 30 `history` entries is safe).
