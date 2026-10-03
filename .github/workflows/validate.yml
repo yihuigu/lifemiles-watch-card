@@ -19,3 +19,6 @@ jobs:
       - uses: hacs/action@main
         with:
           category: plugin
+          # No licence on purpose (that is the owner's call). Only a listing in HACS's default
+          # store needs one; adding this repo as a custom repository does not.
+          ignore: license
