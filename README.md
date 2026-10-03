@@ -44,8 +44,11 @@ entity: sensor.lifemiles_watch
 
 ## The sensor
 
-The state is the number of awards available right now. Everything else is attributes. A REST
-sensor that polls the watcher's `/status.json` does it:
+The state is the number of awards available right now. Everything else is attributes.
+
+**Easiest:** install the companion integration, [LifeMiles Watch](https://github.com/yihuigu/lifemiles-watch-integration), as a HACS custom repository (category *Integration*) and add it in Settings -> Devices & services. It creates `sensor.lifemiles_watch` for you.
+
+**Or by hand:** a REST sensor that polls the watcher's `/status.json` does the same:
 
 ```yaml
 rest:
