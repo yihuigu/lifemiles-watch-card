@@ -7,12 +7,16 @@
  *   recent_days: 7                        # optional: how long a gone award counts as "recent"
  *   max_history: 10                       # optional: older finds listed under "History"
  *   max_runs: 5                           # optional: runs listed under "Recent runs"
+ *   show_watches: true                    # optional: the "Watching" section (routes and dates)
  *
  * No build step and no dependencies. Colours come from the Home Assistant theme.
  */
 const ESC = { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" };
 const esc = (v) => String(v ?? "").replace(/[&<>"']/g, (c) => ESC[c]);
 const miles = (n) => Number(n).toLocaleString("en-US");
+const dateRange = (a, b) =>
+  new Intl.DateTimeFormat(undefined, { day: "numeric", month: "short", year: "numeric" })
+    .formatRange(new Date(`${a}T00:00:00`), new Date(`${b}T00:00:00`));
 const plural = (n, word, many = `${word}s`) => `${n} ${n === 1 ? word : many}`;
 const day = (iso) =>
   new Date(`${iso}T00:00:00`).toLocaleDateString(undefined, {
@@ -70,6 +74,11 @@ const STYLE = `
   .strip i { width: 14px; height: 14px; border-radius: 3px; background: var(--divider-color, #999); }
   .strip i.found { background: var(--success-color, #43a047); }
   .strip i.bad { background: var(--error-color, #db4437); }
+  .watch { display: flex; justify-content: space-between; gap: 8px; padding: 5px 0; font-size: 0.9em;
+           border-bottom: 1px solid var(--divider-color, rgba(127,127,127,.25)); }
+  .watch .r { font-weight: 500; }
+  .watch .d { color: var(--secondary-text-color); text-align: right; white-space: nowrap; }
+  .src { color: var(--secondary-text-color); font-size: 0.8em; padding-top: 4px; }
   .run { display: flex; justify-content: space-between; gap: 8px; font-size: 0.85em; padding: 3px 0;
          border-bottom: 1px solid var(--divider-color, rgba(127,127,127,.25)); }
   .run.bad { color: var(--error-color, #db4437); }
@@ -89,7 +98,7 @@ class LifemilesWatchCard extends HTMLElement {
 
   setConfig(config) {
     if (!config || !config.entity) throw new Error("lifemiles-watch-card: `entity` is required");
-    this._config = { recent_days: 7, max_history: 10, max_runs: 5, ...config };
+    this._config = { recent_days: 7, max_history: 10, max_runs: 5, show_watches: true, ...config };
     this._last = undefined;
     this._render();
   }
@@ -167,7 +176,19 @@ class LifemilesWatchCard extends HTMLElement {
       <h3>Available now</h3>${nowRows}
       ${recentRows ? `<h3>Found in the last ${plural(this._config.recent_days, "day")}</h3>${recentRows}` : ""}
       ${olderRows ? `<details><summary>History (${older.length} earlier ${older.length === 1 ? "find" : "finds"})</summary>${olderRows}</details>` : ""}
-      <h3>Recent runs</h3><div class="strip">${strip}</div>${runRows || '<div class="empty">No runs recorded yet.</div>'}`;
+      <h3>Recent runs</h3><div class="strip">${strip}</div>${runRows || '<div class="empty">No runs recorded yet.</div>'}
+      ${this._watching(a)}`;
+  }
+
+  _watching(a) {
+    const c = a.config || {};
+    const list = c.watches || [];
+    if (!this._config.show_watches || !list.length) return "";
+    const rows = list.map((w) => `<div class="watch"><span class="r">${esc((w.from || []).join(", "))} → ${esc((w.to || []).join(", "))}</span>
+      <span class="d">${esc(dateRange(w.start, w.end))}</span></div>`).join("");
+    const src = c.source === "home-assistant" ? "Set in Home Assistant (replaces config.toml until reset)"
+      : c.source === "config.toml" ? "From the watcher's config.toml" : "";
+    return `<details><summary>Watching ${plural(list.length, "route block")}</summary>${rows}${src ? `<div class="src">${esc(src)}</div>` : ""}</details>`;
   }
 
   _row(o, kind, now) {
